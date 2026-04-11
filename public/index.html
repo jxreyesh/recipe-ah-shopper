@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>RecipePlanner — Search, Plan & Shop</title>
+  <meta name="description" content="Search recipes, build a multi-recipe meal plan, and generate a smart shopping list." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Playfair+Display:wght@700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+  <!-- ── HEADER ── -->
+  <header class="header">
+    <div class="header-inner">
+      <div class="logo">
+        <span class="logo-icon">🍽️</span>
+        <span class="logo-text">RecipePlanner</span>
+      </div>
+      <p class="header-tagline">Search recipes · Build a menu · Shop smart</p>
+    </div>
+    <div class="header-bg-circles">
+      <div class="circle c1"></div>
+      <div class="circle c2"></div>
+      <div class="circle c3"></div>
+    </div>
+  </header>
+
+  <!-- ── MAIN ── -->
+  <main class="main">
+
+    <!-- ════════════════════════════════
+         SCREEN 1 — Search & Browse
+         ════════════════════════════════ -->
+    <section id="screen-search" class="screen active">
+
+      <!-- Search bar -->
+      <div class="search-bar-wrap">
+        <div class="search-bar">
+          <span class="search-icon">🔍</span>
+          <input
+            type="search"
+            id="search-input"
+            placeholder="Search any recipe — pasta, tacos, curry…"
+            autocomplete="off"
+            aria-label="Search recipes"
+          />
+          <button id="search-btn" class="search-submit-btn" aria-label="Search">Search</button>
+        </div>
+      </div>
+
+      <!-- Category pills -->
+      <div class="category-pills-wrap">
+        <div class="category-pills" id="category-pills" role="group" aria-label="Browse by category">
+          <!-- Injected by JS -->
+        </div>
+      </div>
+
+      <!-- Results -->
+      <div id="results-area">
+        <div class="hero-msg" id="hero-msg">
+          <span class="hero-emoji">👨‍🍳</span>
+          <h1>What are you cooking?</h1>
+          <p>Search for a dish or pick a category. Add as many recipes as you like — we'll merge the ingredients into one smart shopping list.</p>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- ════════════════════════════════
+         SCREEN 2 — Shopping Cart
+         ════════════════════════════════ -->
+    <section id="screen-cart" class="screen">
+
+      <div class="cart-screen-header">
+        <div>
+          <h2 class="cart-screen-title">🛒 My Shopping List</h2>
+          <p class="cart-screen-sub" id="cart-screen-sub"></p>
+        </div>
+        <button id="add-more-btn" class="btn btn-ghost">+ Add More Recipes</button>
+      </div>
+
+      <!-- Tabs -->
+      <div class="cart-tabs" role="tablist">
+        <button class="cart-tab active" id="tab-btn-overview" role="tab" aria-selected="true" aria-controls="tab-overview" data-tab="overview">
+          📋 Recipes <span class="tab-badge" id="tab-badge-recipes">0</span>
+        </button>
+        <button class="cart-tab" id="tab-btn-ingredients" role="tab" aria-selected="false" aria-controls="tab-ingredients" data-tab="ingredients">
+          🧂 Shopping List <span class="tab-badge" id="tab-badge-items">0</span>
+        </button>
+      </div>
+
+      <!-- Tab: Recipes overview -->
+      <div id="tab-overview" class="tab-content active" role="tabpanel">
+        <div id="cart-recipe-list" class="cart-recipe-list"></div>
+      </div>
+
+      <!-- Tab: Merged ingredient list -->
+      <div id="tab-ingredients" class="tab-content" role="tabpanel">
+        <div class="ingredient-list-header">
+          <span id="ingredient-count" class="item-count-badge"></span>
+          <div class="ingredient-list-actions">
+            <button id="estimate-ah-btn" class="btn btn-sm" style="background-color: var(--primary); color: white;">🏷️ Estimate Costs with AH</button>
+            <button id="copy-btn" class="btn btn-sm">📋 Copy</button>
+            <button id="print-btn" class="btn btn-sm">🖨️ Print</button>
+            <button id="clear-btn" class="btn btn-sm btn-danger">🗑️ Clear All</button>
+          </div>
+        </div>
+        <div id="ah-total-cost-container" class="hidden" style="margin-top: 1rem; padding: 1.5rem; background: rgba(0,255,100,0.1); border-radius: 12px; border: 1px solid rgba(0,255,100,0.2); text-align: center;">
+          <h2 style="margin: 0; color: var(--text);">Estimated Albert Heijn Total: <span id="ah-total-cost" style="color: var(--primary);">€0.00</span></h2>
+        </div>
+        <ul id="ingredient-list" class="ingredient-list" aria-label="Shopping list"></ul>
+      </div>
+
+    </section>
+
+  </main>
+
+  <!-- ── FLOATING CART BUTTON ── -->
+  <button id="cart-fab" class="cart-fab hidden" aria-label="View shopping list">
+    <span class="fab-icon">🛒</span>
+    <span class="fab-label">View List</span>
+    <span class="fab-badge" id="fab-badge">0</span>
+  </button>
+
+  <!-- ── RECIPE DETAIL MODAL ── -->
+  <div id="modal-overlay" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+    <div class="modal" id="modal">
+      <button class="modal-close" id="modal-close" aria-label="Close">✕</button>
+
+      <!-- Hero image -->
+      <div class="modal-hero">
+        <img id="modal-img" src="" alt="" class="modal-img" />
+        <div class="modal-hero-overlay"></div>
+        <div class="modal-hero-content">
+          <div class="modal-tags" id="modal-tags"></div>
+          <h2 class="modal-title" id="modal-title"></h2>
+        </div>
+      </div>
+
+      <!-- Body -->
+      <div class="modal-body">
+
+        <!-- Servings control -->
+        <div class="modal-servings-row">
+          <span class="modal-servings-label">👥 Servings</span>
+          <div class="servings-controls">
+            <button class="servings-btn" id="modal-dec" aria-label="Decrease">−</button>
+            <input type="number" id="modal-servings" value="4" min="1" max="50" aria-label="Number of servings" />
+            <button class="servings-btn" id="modal-inc" aria-label="Increase">+</button>
+          </div>
+          <span class="modal-servings-note">recipe's actual servings</span>
+        </div>
+
+        <!-- Tabs for Ingredients vs Instructions -->
+        <div class="modal-tabs" role="tablist">
+          <button class="modal-tab active" id="modal-tab-ing" role="tab" aria-selected="true" data-tab="ingredients">Ingredients</button>
+          <button class="modal-tab" id="modal-tab-ins" role="tab" aria-selected="false" data-tab="instructions">Instructions</button>
+        </div>
+
+        <!-- Tab Content: Ingredients checklist -->
+        <div id="modal-ing-content" class="modal-tab-content active">
+          <div class="modal-ingredients-header">
+            <h3>Checklist <span id="modal-selected-count" class="modal-selected-count"></span></h3>
+            <div class="modal-check-actions">
+              <button id="check-all-btn" class="btn btn-xs">✓ All</button>
+              <button id="uncheck-all-btn" class="btn btn-xs">✗ None</button>
+            </div>
+          </div>
+          <ul id="modal-ingredient-list" class="modal-ingredient-list" aria-label="Select ingredients"></ul>
+        </div>
+
+        <!-- Tab Content: Instructions navigation -->
+        <div id="modal-ins-content" class="modal-tab-content">
+          <div id="modal-instructions-card" class="modal-instructions-card">
+            <!-- Injected by JS -->
+          </div>
+        </div>
+
+        <!-- Footer action -->
+        <div class="modal-footer">
+          <button id="add-to-cart-btn" class="btn btn-primary btn-lg">
+            <span>🛒</span> Add to Shopping List
+          </button>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- ── TOAST ── -->
+  <div id="toast" class="toast" aria-live="polite" aria-atomic="true"></div>
+
+  <footer class="footer">
+    <p>Powered by <a href="https://forkify-api.herokuapp.com" target="_blank" rel="noopener">Forkify API</a> · Recipes from BBC Good Food, Bon Appétit, Epicurious &amp; more</p>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>
