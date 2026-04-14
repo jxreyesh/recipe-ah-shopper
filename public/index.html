@@ -1,15 +1,20 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>RecipePlanner — Search, Plan & Shop</title>
-  <meta name="description" content="Search recipes, build a multi-recipe meal plan, and generate a smart shopping list." />
+  <meta name="description"
+    content="Search recipes, build a multi-recipe meal plan, and generate a smart shopping list." />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Playfair+Display:wght@700&display=swap" rel="stylesheet" />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Playfair+Display:wght@700&display=swap"
+    rel="stylesheet" />
   <link rel="stylesheet" href="styles.css" />
 </head>
+
 <body>
 
   <!-- ── HEADER ── -->
@@ -20,7 +25,7 @@
         <span class="logo-text">RecipePlanner</span>
       </div>
       <p class="header-tagline">Search recipes · Build a menu · Shop smart</p>
-      
+
       <!-- AUTH SECTION -->
       <div id="auth-header-section" class="auth-header-section">
         <button id="header-login-btn" class="btn btn-outline btn-sm">Sign In / Register</button>
@@ -49,13 +54,8 @@
       <div class="search-bar-wrap">
         <div class="search-bar">
           <span class="search-icon">🔍</span>
-          <input
-            type="search"
-            id="search-input"
-            placeholder="Search any recipe — pasta, tacos, curry…"
-            autocomplete="off"
-            aria-label="Search recipes"
-          />
+          <input type="search" id="search-input" placeholder="Search any recipe — pasta, tacos, curry…"
+            autocomplete="off" aria-label="Search recipes" />
           <button id="search-btn" class="search-submit-btn" aria-label="Search">Search</button>
         </div>
       </div>
@@ -72,7 +72,8 @@
         <div class="hero-msg" id="hero-msg">
           <span class="hero-emoji">👨‍🍳</span>
           <h1>What are you cooking?</h1>
-          <p>Search for a dish or pick a category. Add as many recipes as you like — we'll merge the ingredients into one smart shopping list.</p>
+          <p>Search for a dish or pick a category. Add as many recipes as you like — we'll merge the ingredients into
+            one smart shopping list.</p>
         </div>
       </div>
 
@@ -93,10 +94,12 @@
 
       <!-- Tabs -->
       <div class="cart-tabs" role="tablist">
-        <button class="cart-tab active" id="tab-btn-overview" role="tab" aria-selected="true" aria-controls="tab-overview" data-tab="overview">
+        <button class="cart-tab active" id="tab-btn-overview" role="tab" aria-selected="true"
+          aria-controls="tab-overview" data-tab="overview">
           📋 Recipes <span class="tab-badge" id="tab-badge-recipes">0</span>
         </button>
-        <button class="cart-tab" id="tab-btn-ingredients" role="tab" aria-selected="false" aria-controls="tab-ingredients" data-tab="ingredients">
+        <button class="cart-tab" id="tab-btn-ingredients" role="tab" aria-selected="false"
+          aria-controls="tab-ingredients" data-tab="ingredients">
           🧂 Shopping List <span class="tab-badge" id="tab-badge-items">0</span>
         </button>
       </div>
@@ -111,14 +114,17 @@
         <div class="ingredient-list-header">
           <span id="ingredient-count" class="item-count-badge"></span>
           <div class="ingredient-list-actions">
-            <button id="estimate-ah-btn" class="btn btn-sm" style="background-color: var(--primary); color: white;">🏷️ Estimate Costs with AH</button>
+            <button id="estimate-ah-btn" class="btn btn-sm">🏷️
+              Estimate Costs with AH</button>
             <button id="copy-btn" class="btn btn-sm">📋 Copy</button>
             <button id="print-btn" class="btn btn-sm">🖨️ Print</button>
             <button id="clear-btn" class="btn btn-sm btn-danger">🗑️ Clear All</button>
           </div>
         </div>
-        <div id="ah-total-cost-container" class="hidden" style="margin-top: 1rem; padding: 1.5rem; background: rgba(0,255,100,0.1); border-radius: 12px; border: 1px solid rgba(0,255,100,0.2); text-align: center;">
-          <h2 style="margin: 0; color: var(--text);">Estimated Albert Heijn Total: <span id="ah-total-cost" style="color: var(--primary);">€0.00</span></h2>
+        <div id="ah-total-cost-container" class="hidden"
+          style="margin-top: 1rem; padding: 1.5rem; background: rgba(0,255,100,0.1); border-radius: 12px; border: 1px solid rgba(0,255,100,0.2); text-align: center;">
+          <h2 style="margin: 0; color: var(--text);">Estimated Albert Heijn Total: <span id="ah-total-cost"
+              style="color: var(--primary);">€0.00</span></h2>
         </div>
         <ul id="ingredient-list" class="ingredient-list" aria-label="Shopping list"></ul>
       </div>
@@ -165,8 +171,10 @@
 
         <!-- Tabs for Ingredients vs Instructions -->
         <div class="modal-tabs" role="tablist">
-          <button class="modal-tab active" id="modal-tab-ing" role="tab" aria-selected="true" data-tab="ingredients">Ingredients</button>
-          <button class="modal-tab" id="modal-tab-ins" role="tab" aria-selected="false" data-tab="instructions">Instructions</button>
+          <button class="modal-tab active" id="modal-tab-ing" role="tab" aria-selected="true"
+            data-tab="ingredients">Ingredients</button>
+          <button class="modal-tab" id="modal-tab-ins" role="tab" aria-selected="false"
+            data-tab="instructions">Instructions</button>
         </div>
 
         <!-- Tab Content: Ingredients checklist -->
@@ -204,7 +212,7 @@
     <div class="modal auth-modal" role="document">
       <button id="auth-modal-close" class="modal-close" aria-label="Close modal">×</button>
       <div class="modal-body auth-modal-body">
-        
+
         <h2 id="auth-modal-title" class="auth-modal-title">Welcome Back</h2>
         <p id="auth-modal-subtitle" class="auth-modal-subtitle">Sign in to sync your recipes and grocery lists</p>
 
@@ -236,10 +244,12 @@
   <div id="toast" class="toast" aria-live="polite" aria-atomic="true"></div>
 
   <footer class="footer">
-    <p>Powered by <a href="https://forkify-api.herokuapp.com" target="_blank" rel="noopener">Forkify API</a> · Recipes from BBC Good Food, Bon Appétit, Epicurious &amp; more</p>
+    <p>Powered by <a href="https://forkify-api.herokuapp.com" target="_blank" rel="noopener">Forkify API</a> · Recipes
+      from BBC Good Food, Bon Appétit, Epicurious &amp; more</p>
   </footer>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="app.js"></script>
 </body>
+
 </html>
