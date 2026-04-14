@@ -12,10 +12,15 @@
 'use strict';
 
 /* ══════════════════════════════════════════════════════════
-   CONSTANTS
+   CONSTANTS & SUPABASE INIT
    ══════════════════════════════════════════════════════════ */
 
 const API = 'https://forkify-api.herokuapp.com/api/v2';
+const _SUPABASE_URL = 'https://sridrvmywaeatarzfqmx.supabase.co';
+const _SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNyaWRydm15d2FlYXRhcnpmcW14Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU5ODkwMjAsImV4cCI6MjA5MTU2NTAyMH0.0iLlZj9EzGq7rrgXFnr220BlvCBzCTzum2Ohz8Cy7VA';
+
+// Create Supabase client from CDN global
+const appDb = window.supabase ? window.supabase.createClient(_SUPABASE_URL, _SUPABASE_KEY) : null;
 
 // Quick-search shortcuts shown as pills (Forkify has no category filter endpoint)
 const CATEGORIES = [
@@ -63,7 +68,10 @@ const state = {
   activeCategory: null,  // currently active quick-search pill
   modalState:     null,  // active modal state
   loading:        false,
+  user:           null,  // current logged-in user object
 };
+
+let authMode = 'login'; // 'login' or 'signup'
 
 // Global for tracking active modal tab
 let activeModalTab = 'ingredients';
@@ -122,6 +130,24 @@ const checkAllBtn          = $('check-all-btn');
 const uncheckAllBtn        = $('uncheck-all-btn');
 
 const toastEl              = $('toast');
+
+/* Auth UI */
+const headerLoginBtn       = $('header-login-btn');
+const headerProfileMenu    = $('header-profile-menu');
+const headerUserEmail      = $('header-user-email');
+const headerLogoutBtn      = $('header-logout-btn');
+
+const authModalOverlay     = $('auth-modal-overlay');
+const authModalClose       = $('auth-modal-close');
+const authForm             = $('auth-form');
+const authEmail            = $('auth-email');
+const authPassword         = $('auth-password');
+const authSubmitBtn        = $('auth-submit-btn');
+const authError            = $('auth-error');
+const authToggleMode       = $('auth-toggle-mode');
+const authModalTitle       = $('auth-modal-title');
+const authModalSubtitle    = $('auth-modal-subtitle');
+const authToggleText       = $('auth-toggle-text');
 
 /* ══════════════════════════════════════════════════════════
    UTILITIES
@@ -468,7 +494,7 @@ function buildRecipeCard(recipe, isBestMatch = false) {
       ${inCart ? `<span class="in-cart-indicator">✓ In List</span>` : ''}
     </div>
     <div class="card-body">
-      <h3 class="card-title">${title}</h3>
+      <h3 class="card-title">${title} ${/\b(vegan|vegetarian)\b/i.test(title) ? '<span title="Vegan/Vegetarian">🌿</span>' : ''}</h3>
     </div>
     <div class="card-action">
       <span class="card-action-text">${inCart ? '✓ Already in list — tap to edit' : '+ Add to list'}</span>
@@ -521,7 +547,8 @@ async function openModal(recipe) {
   // Reset modal tab to ingredients when opening new
   setModalTab('ingredients');
 
-  modalTitleEl.textContent      = recipe.title || 'Loading…';
+  const loadingTitle = recipe.title || 'Loading…';
+  modalTitleEl.innerHTML        = loadingTitle + (/\b(vegan|vegetarian)\b/i.test(loadingTitle) ? ' <span title="Vegan/Vegetarian">🌿</span>' : '');
   modalImg.src                  = recipe.image_url || '';
   modalImg.alt                  = recipe.title || '';
   modalTagsEl.innerHTML         = '';
@@ -572,7 +599,8 @@ function renderModalFull() {
   // Image & title
   modalImg.src              = recipe.image_url || '';
   modalImg.alt              = recipe.title || '';
-  modalTitleEl.textContent  = recipe.title || '';
+  const recipeTitle = recipe.title || '';
+  modalTitleEl.innerHTML    = recipeTitle + (/\b(vegan|vegetarian)\b/i.test(recipeTitle) ? ' <span title="Vegan/Vegetarian">🌿</span>' : '');
 
   // Tags
   modalTagsEl.innerHTML = [
@@ -602,7 +630,7 @@ function renderModalInstructions() {
   modalInstructionsCard.innerHTML = `
     <div class="ins-card-content">
       <span class="ins-card-publisher">${recipe.publisher || 'Recipe Source'}</span>
-      <h3 class="ins-card-title">${recipe.title}</h3>
+      <h3 class="ins-card-title">${recipe.title} ${/\b(vegan|vegetarian)\b/i.test(recipe.title || '') ? '<span title="Vegan/Vegetarian">🌿</span>' : ''}</h3>
       <p class="ins-card-text">
         This recipe was published by <strong>${recipe.publisher}</strong>. 
         The full step-by-step instructions and cooking tips are available on their website.
@@ -709,6 +737,7 @@ function addToCart() {
   closeModal();
   updateFab();
   refreshCardIndicators();
+  syncCartToCloud();
 }
 
 function removeFromCart(id) {
@@ -718,6 +747,7 @@ function removeFromCart(id) {
   refreshCardIndicators();
   if (entry) showToast(`🗑️ Removed "${entry.recipe.title}"`);
   if (state.cart.length === 0) { showScreen('search'); } else { renderCart(); }
+  syncCartToCloud();
 }
 
 function updateFab() {
@@ -766,7 +796,7 @@ function renderCartRecipeList() {
       <img src="${entry.recipe.image_url || ''}" alt="${entry.recipe.title}" class="cart-recipe-img"
            onerror="this.src='data:image/svg+xml,<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'100\' height=\'80\'><rect fill=\'%23252830\'/><text x=\'50%\' y=\'50%\' font-size=\'28\' text-anchor=\'middle\' dominant-baseline=\'middle\'>🍽️</text></svg>'" />
       <div class="cart-recipe-info">
-        <h4 class="cart-recipe-name">${entry.recipe.title}</h4>
+        <h4 class="cart-recipe-name">${entry.recipe.title} ${/\b(vegan|vegetarian)\b/i.test(entry.recipe.title || '') ? '<span title="Vegan/Vegetarian">🌿</span>' : ''}</h4>
         <div class="cart-recipe-meta">
           ${entry.recipe.publisher    ? `<span class="card-tag">${entry.recipe.publisher}</span>` : ''}
           ${entry.recipe.cooking_time ? `<span class="card-tag">⏱ ${entry.recipe.cooking_time} min</span>` : ''}
@@ -1121,6 +1151,7 @@ clearBtn.addEventListener('click', () => {
   showScreen('search');
   showToast('🗑️ Shopping list cleared');
   ahTotalCostContainer.classList.add('hidden');
+  syncCartToCloud();
 });
 
 // Modal — tabs
@@ -1154,6 +1185,153 @@ uncheckAllBtn.addEventListener('click', () => {
 
 // Modal — add to cart
 addToCartBtn.addEventListener('click', addToCart);
+
+/* ══════════════════════════════════════════════════════════
+   SUPABASE AUTH LOGIC
+   ══════════════════════════════════════════════════════════ */
+
+if (appDb) {
+  // 1. Initial Session Check
+  appDb.auth.getSession().then(({ data: { session } }) => {
+    handleAuthStateChange(session ? session.user : null);
+  });
+
+  // 2. Listen for Auth Changes
+  appDb.auth.onAuthStateChange((_event, session) => {
+    handleAuthStateChange(session ? session.user : null);
+  });
+}
+
+async function handleAuthStateChange(user) {
+  state.user = user;
+  if (user) {
+    headerLoginBtn.classList.add('hidden');
+    headerProfileMenu.classList.remove('hidden');
+    headerUserEmail.textContent = user.email;
+    authModalOverlay.classList.add('hidden');
+    
+    // Fetch cart from cloud on login
+    await fetchCartFromCloud();
+  } else {
+    headerProfileMenu.classList.add('hidden');
+    headerLoginBtn.classList.remove('hidden');
+    headerUserEmail.textContent = '';
+    
+    // Clear cart on logout
+    state.cart = [];
+    updateFab();
+    if (!screenCart.classList.contains('hidden')) showScreen('search');
+  }
+}
+
+async function fetchCartFromCloud() {
+  if (!appDb || !state.user) return;
+  try {
+    const { data, error } = await appDb
+      .from('user_carts')
+      .select('cart_data')
+      .eq('user_id', state.user.id)
+      .single();
+      
+    if (error && error.code !== 'PGRST116') throw error; // PGRST116 is "no rows found"
+    
+    if (data && data.cart_data) {
+      state.cart = data.cart_data;
+      updateFab();
+      // If currently on cart screen, re-render
+      if (!screenCart.classList.contains('hidden')) renderCart();
+    }
+  } catch (err) {
+    console.error('Error fetching cart:', err);
+  }
+}
+
+async function syncCartToCloud() {
+  if (!appDb || !state.user) return; // Keep it local if not logged in
+  try {
+    const { error } = await appDb
+      .from('user_carts')
+      .upsert({ 
+        user_id: state.user.id, 
+        cart_data: state.cart 
+      }, { onConflict: 'user_id' });
+      
+    if (error) throw error;
+  } catch (err) {
+    console.error('Error syncing cart:', err);
+  }
+}
+
+function updateAuthModalUI() {
+  authError.classList.add('hidden');
+  if (authMode === 'login') {
+    authModalTitle.textContent = 'Welcome Back';
+    authModalSubtitle.textContent = 'Sign in to sync your recipes and grocery lists';
+    authSubmitBtn.textContent = 'Sign In';
+    authToggleText.textContent = "Don't have an account?";
+    authToggleMode.textContent = 'Create one';
+  } else {
+    authModalTitle.textContent = 'Join RecipePlanner';
+    authModalSubtitle.textContent = 'Create an account to save your favorites everywhere';
+    authSubmitBtn.textContent = 'Sign Up';
+    authToggleText.textContent = 'Already have an account?';
+    authToggleMode.textContent = 'Sign in';
+  }
+}
+
+// UI Toggle
+headerLoginBtn.addEventListener('click', () => {
+  authMode = 'login';
+  updateAuthModalUI();
+  authModalOverlay.classList.remove('hidden');
+});
+
+authModalClose.addEventListener('click', () => {
+  authModalOverlay.classList.add('hidden');
+});
+
+authToggleMode.addEventListener('click', () => {
+  authMode = authMode === 'login' ? 'signup' : 'login';
+  updateAuthModalUI();
+});
+
+// Form Submission
+authForm.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const email = authEmail.value.trim();
+  const password = authPassword.value;
+
+  authError.classList.add('hidden');
+  authSubmitBtn.disabled = true;
+  authSubmitBtn.textContent = 'Please wait...';
+
+  try {
+    if (authMode === 'signup') {
+      const { error } = await appDb.auth.signUp({ email, password });
+      if (error) throw error;
+      showToast('✅ Account created! Check your email to verify (or sign in if disabled).');
+    } else {
+      const { error } = await appDb.auth.signInWithPassword({ email, password });
+      if (error) throw error;
+      showToast('✅ Welcome back!');
+    }
+    authForm.reset();
+  } catch (err) {
+    authError.textContent = err.message;
+    authError.classList.remove('hidden');
+  } finally {
+    authSubmitBtn.disabled = false;
+    authSubmitBtn.textContent = authMode === 'login' ? 'Sign In' : 'Sign Up';
+  }
+});
+
+// Logout
+headerLogoutBtn.addEventListener('click', async () => {
+  if (appDb) {
+    await appDb.auth.signOut();
+    showToast('👋 Signed out successfully');
+  }
+});
 
 /* ══════════════════════════════════════════════════════════
    INIT

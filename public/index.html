@@ -20,6 +20,15 @@
         <span class="logo-text">RecipePlanner</span>
       </div>
       <p class="header-tagline">Search recipes · Build a menu · Shop smart</p>
+      
+      <!-- AUTH SECTION -->
+      <div id="auth-header-section" class="auth-header-section">
+        <button id="header-login-btn" class="btn btn-outline btn-sm">Sign In / Register</button>
+        <div id="header-profile-menu" class="hidden">
+          <span id="header-user-email" class="header-user-email"></span>
+          <button id="header-logout-btn" class="btn btn-outline btn-sm">Sign Out</button>
+        </div>
+      </div>
     </div>
     <div class="header-bg-circles">
       <div class="circle c1"></div>
@@ -190,6 +199,39 @@
     </div>
   </div>
 
+  <!-- ── AUTH MODAL ── -->
+  <div id="auth-modal-overlay" class="modal-overlay hidden" aria-modal="true" role="dialog">
+    <div class="modal auth-modal" role="document">
+      <button id="auth-modal-close" class="modal-close" aria-label="Close modal">×</button>
+      <div class="modal-body auth-modal-body">
+        
+        <h2 id="auth-modal-title" class="auth-modal-title">Welcome Back</h2>
+        <p id="auth-modal-subtitle" class="auth-modal-subtitle">Sign in to sync your recipes and grocery lists</p>
+
+        <form id="auth-form" class="auth-form">
+          <div class="form-group">
+            <label for="auth-email">Email</label>
+            <input type="email" id="auth-email" required placeholder="you@example.com" />
+          </div>
+          <div class="form-group">
+            <label for="auth-password">Password</label>
+            <input type="password" id="auth-password" required placeholder="••••••••" />
+          </div>
+          <p id="auth-error" class="auth-error hidden"></p>
+          <button type="submit" id="auth-submit-btn" class="btn btn-primary btn-lg auth-submit-btn">
+            Sign In
+          </button>
+        </form>
+
+        <div class="auth-toggle-wrap">
+          <p id="auth-toggle-text">Don't have an account?</p>
+          <button id="auth-toggle-mode" class="auth-toggle-mode">Create one</button>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
   <!-- ── TOAST ── -->
   <div id="toast" class="toast" aria-live="polite" aria-atomic="true"></div>
 
@@ -197,6 +239,7 @@
     <p>Powered by <a href="https://forkify-api.herokuapp.com" target="_blank" rel="noopener">Forkify API</a> · Recipes from BBC Good Food, Bon Appétit, Epicurious &amp; more</p>
   </footer>
 
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="app.js"></script>
 </body>
 </html>
