@@ -102,6 +102,10 @@ body {
 /* Hide old decorative circles */
 .header-bg-circles { display: none; }
 
+/* Logo is clickable — add pointer */
+.logo { cursor: pointer; }
+.logo:hover .logo-text { opacity: 0.85; }
+
 /* Auth controls in header */
 .auth-header-section {
   position: absolute;
@@ -110,16 +114,120 @@ body {
   transform: translateY(-50%);
 }
 
-#header-profile-menu {
+/* ── My Account Dropdown ── */
+.header-profile-menu {
+  position: relative;
+}
+
+.account-menu-trigger {
   display: flex;
   align-items: center;
-  gap: 1rem;
+  gap: 0.55rem;
+  background: rgba(255,255,255,0.15);
+  border: 1.5px solid rgba(255,255,255,0.3);
+  border-radius: var(--radius-sm);
+  padding: 0.4rem 0.75rem 0.4rem 0.5rem;
+  cursor: pointer;
+  font-family: var(--font);
+  color: #fff;
+  font-size: 0.82rem;
+  font-weight: 600;
+  transition: var(--transition);
+}
+.account-menu-trigger:hover {
+  background: rgba(255,255,255,0.25);
+  border-color: rgba(255,255,255,0.5);
+}
+
+.account-avatar {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.9);
+  color: var(--accent);
+  font-size: 0.75rem;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
 }
 
 .header-user-email {
-  font-size: 0.82rem;
-  color: rgba(255,255,255,0.8);
-  font-weight: 500;
+  font-size: 0.8rem;
+  max-width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.account-caret {
+  font-size: 0.65rem;
+  opacity: 0.7;
+  transition: transform var(--transition);
+}
+.account-menu-trigger[aria-expanded="true"] .account-caret { transform: rotate(180deg); }
+
+.account-dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  background: var(--bg-card);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-modal);
+  min-width: 200px;
+  z-index: 300;
+  overflow: hidden;
+  opacity: 0;
+  transform: translateY(-6px);
+  pointer-events: none;
+  transition: opacity 0.18s ease, transform 0.18s ease;
+}
+.account-dropdown.open {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
+.account-dropdown-header {
+  padding: 0.6rem 1rem 0.5rem;
+  border-bottom: 1px solid var(--border);
+}
+.account-dropdown-label {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+}
+
+.account-dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  width: 100%;
+  padding: 0.7rem 1rem;
+  background: transparent;
+  border: none;
+  font-family: var(--font);
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--text);
+  cursor: pointer;
+  text-align: left;
+  transition: background var(--transition);
+}
+.account-dropdown-item:hover { background: var(--accent-light); color: var(--accent); }
+.account-dropdown-item--danger { color: var(--red); }
+.account-dropdown-item--danger:hover { background: var(--red-dim); color: var(--red); }
+
+.dropdown-item-icon { font-size: 0.95rem; width: 1.1rem; text-align: center; }
+
+.account-dropdown-divider {
+  height: 1px;
+  background: var(--border);
+  margin: 0.2rem 0;
 }
 
 /* ==========================================================
@@ -1368,4 +1476,111 @@ body {
   border-radius: var(--radius-sm);
   text-align: left;
   border: 1px solid rgba(214,48,49,0.2);
+}
+
+/* ==========================================================
+   FAVOURITE HEART BUTTON — on recipe cards
+   ========================================================== */
+
+.card-fav-btn {
+  position: absolute;
+  top: 0.55rem;
+  right: 0.55rem;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.92);
+  border: none;
+  cursor: pointer;
+  font-size: 1rem;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #aaa;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.18);
+  transition: color 0.18s, background 0.18s, transform 0.15s;
+  z-index: 10;
+}
+.card-fav-btn:hover {
+  background: #fff;
+  color: var(--accent);
+  transform: scale(1.12);
+}
+.card-fav-btn.active {
+  color: #e63946;
+  background: #fff;
+}
+.card-fav-btn.active:hover { color: #c1121f; }
+
+/* Favourite button in the recipe modal footer */
+.modal-fav-btn {
+  font-family: var(--font);
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  background: var(--bg);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 0.65rem 1.2rem;
+  cursor: pointer;
+  transition: var(--transition);
+  white-space: nowrap;
+}
+.modal-fav-btn:hover {
+  background: var(--accent-light);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+.modal-fav-btn.active {
+  color: #e63946;
+  border-color: rgba(230,57,70,0.35);
+  background: rgba(230,57,70,0.06);
+}
+.modal-fav-btn.active:hover { background: rgba(230,57,70,0.12); }
+
+/* ==========================================================
+   FAVOURITES SCREEN
+   ========================================================== */
+
+.favourites-screen-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.favourites-screen-title {
+  font-size: 1.6rem;
+  font-weight: 800;
+  color: var(--text);
+  margin: 0 0 0.2rem;
+}
+
+.favourites-screen-sub {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  margin: 0;
+}
+
+.empty-favourites {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  padding: 5rem 2rem;
+  text-align: center;
+  color: var(--text-secondary);
+}
+.empty-favourites span {
+  font-size: 3rem;
+  line-height: 1;
+  color: var(--text-muted);
+}
+.empty-favourites p {
+  font-size: 1rem;
+  font-weight: 600;
+  margin: 0;
 }

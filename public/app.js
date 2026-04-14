@@ -57,11 +57,12 @@ const CATEGORIES = [
    ══════════════════════════════════════════════════════════ */
 
 const state = {
-  cart: [],    // CartEntry[]
+  cart: [],              // CartEntry[]
+  favourites: new Set(), // Set of recipe_id strings — fast O(1) lookup
   activeCategory: null,  // currently active quick-search pill
-  modalState: null,  // active modal state
+  modalState: null,      // active modal state
   loading: false,
-  user: null,  // current logged-in user object
+  user: null,            // current logged-in user object
 };
 
 let authMode = 'login'; // 'login' or 'signup'
@@ -125,22 +126,36 @@ const uncheckAllBtn = $('uncheck-all-btn');
 const toastEl = $('toast');
 
 /* Auth UI */
-const headerLoginBtn = $('header-login-btn');
-const headerProfileMenu = $('header-profile-menu');
-const headerUserEmail = $('header-user-email');
-const headerLogoutBtn = $('header-logout-btn');
+const headerLoginBtn       = $('header-login-btn');
+const headerProfileMenu    = $('header-profile-menu');
+const headerUserEmail      = $('header-user-email');
+const headerLogoutBtn      = $('header-logout-btn');
+const accountMenuTrigger   = $('account-menu-trigger');
+const accountDropdown      = $('account-dropdown');
+const accountAvatar        = $('account-avatar');
+const navFavouritesBtn     = $('nav-favourites-btn');
+const logoHomeBtn          = $('logo-home');
 
-const authModalOverlay = $('auth-modal-overlay');
-const authModalClose = $('auth-modal-close');
-const authForm = $('auth-form');
-const authEmail = $('auth-email');
-const authPassword = $('auth-password');
-const authSubmitBtn = $('auth-submit-btn');
-const authError = $('auth-error');
-const authToggleMode = $('auth-toggle-mode');
-const authModalTitle = $('auth-modal-title');
+/* Favourites screen */
+const screenFavourites     = $('screen-favourites');
+const favouritesGridArea   = $('favourites-grid-area');
+const favouritesScreenSub  = $('favourites-screen-sub');
+const favouritesBrowseBtn  = $('favourites-browse-btn');
+
+/* Modal fav button */
+const modalFavBtn          = $('modal-fav-btn');
+
+const authModalOverlay  = $('auth-modal-overlay');
+const authModalClose    = $('auth-modal-close');
+const authForm          = $('auth-form');
+const authEmail         = $('auth-email');
+const authPassword      = $('auth-password');
+const authSubmitBtn     = $('auth-submit-btn');
+const authError         = $('auth-error');
+const authToggleMode    = $('auth-toggle-mode');
+const authModalTitle    = $('auth-modal-title');
 const authModalSubtitle = $('auth-modal-subtitle');
-const authToggleText = $('auth-toggle-text');
+const authToggleText    = $('auth-toggle-text');
 
 /* ══════════════════════════════════════════════════════════
    UTILITIES
@@ -314,7 +329,9 @@ async function apiGetRecipe(id) {
 function showScreen(name) {
   screenSearch.classList.toggle('active', name === 'search');
   screenCart.classList.toggle('active', name === 'cart');
+  screenFavourites.classList.toggle('active', name === 'favourites');
   if (name === 'cart') renderCart();
+  if (name === 'favourites') renderFavouritesScreen();
 }
 
 function setCartTab(tab) {
@@ -467,10 +484,12 @@ function renderSearchResults(recipes, subtitle, rawQuery = '') {
 }
 
 function buildRecipeCard(recipe, isBestMatch = false) {
-  const inCart = state.cart.some(e => e.recipe.id === recipe.id);
-  const title = recipe.title || 'Untitled';
-  const img = recipe.image_url || '';
-  const pub = recipe.publisher || '';
+  const inCart  = state.cart.some(e => e.recipe.id === recipe.id);
+  const isFav   = state.favourites.has(recipe.id);
+  const title   = recipe.title || 'Untitled';
+  const img     = recipe.image_url || '';
+  const pub     = recipe.publisher || '';
+  const isLoggedIn = Boolean(state.user);
 
   const card = document.createElement('div');
   card.className = `recipe-card${inCart ? ' in-cart' : ''}${isBestMatch ? ' best-match' : ''}`;
@@ -480,7 +499,7 @@ function buildRecipeCard(recipe, isBestMatch = false) {
   card.setAttribute('aria-label', `Open ${title}`);
   card.innerHTML = `
     <div class="card-img-wrap">
-      <img src="${img}" alt="${title}" loading="lazy" onerror="this.src='data:image/svg+xml,<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'240\' height=\'175\'><rect fill=\'%23252830\'/><text x=\'50%\' y=\'50%\' font-size=\'40\' text-anchor=\'middle\' dominant-baseline=\'middle\'>🍽️</text></svg>'" />
+      <img src="${img}" alt="${title}" loading="lazy" onerror="this.src='data:image/svg+xml,<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'240\' height=\'175\'><rect fill=\'%23f5f5f0\'/><text x=\'50%\' y=\'50%\' font-size=\'40\' text-anchor=\'middle\' dominant-baseline=\'middle\'>🍽️</text></svg>'" />
       <div class="card-img-overlay"></div>
       ${isBestMatch ? `<span class="best-match-badge">⭐ Best Match</span>` : ''}
       ${pub ? `<span class="card-area-tag">${pub}</span>` : ''}
@@ -492,6 +511,24 @@ function buildRecipeCard(recipe, isBestMatch = false) {
     <div class="card-action">
       <span class="card-action-text">${inCart ? '✓ Already in list — tap to edit' : '+ Add to list'}</span>
     </div>`;
+
+  // Heart / favourite button — only when logged in
+  if (isLoggedIn) {
+    const favBtn = document.createElement('button');
+    favBtn.className = `card-fav-btn${isFav ? ' active' : ''}`;
+    favBtn.setAttribute('aria-label', isFav ? 'Remove from favourites' : 'Save to favourites');
+    favBtn.setAttribute('title', isFav ? 'Remove from favourites' : 'Save to favourites');
+    favBtn.innerHTML = isFav ? '♥' : '♡';
+    favBtn.addEventListener('click', async (e) => {
+      e.stopPropagation(); // don't open the modal
+      await toggleFavourite(recipe);
+      const nowFav = state.favourites.has(recipe.id);
+      favBtn.innerHTML = nowFav ? '♥' : '♡';
+      favBtn.classList.toggle('active', nowFav);
+      favBtn.setAttribute('aria-label', nowFav ? 'Remove from favourites' : 'Save to favourites');
+    });
+    card.querySelector('.card-img-wrap').appendChild(favBtn);
+  }
 
   const open = () => openModal(recipe);
   card.addEventListener('click', open);
@@ -647,6 +684,16 @@ function renderModalFull() {
   addToCartBtn.innerHTML = isEditing
     ? '<span>🔄</span> Update Shopping List'
     : '<span>🛒</span> Add to Shopping List';
+
+  // Favourite button in modal — only when logged in
+  if (state.user) {
+    const isFav = state.favourites.has(recipe.id);
+    modalFavBtn.classList.remove('hidden');
+    modalFavBtn.innerHTML = isFav ? '♥ Saved to Favourites' : '♡ Save to Favourites';
+    modalFavBtn.classList.toggle('active', isFav);
+  } else {
+    modalFavBtn.classList.add('hidden');
+  }
 }
 
 function renderModalInstructions() {
@@ -1232,20 +1279,29 @@ async function handleAuthStateChange(user) {
   if (user) {
     headerLoginBtn.classList.add('hidden');
     headerProfileMenu.classList.remove('hidden');
-    headerUserEmail.textContent = user.email;
+    // Set avatar initial from email
+    accountAvatar.textContent = user.email.charAt(0).toUpperCase();
+    headerUserEmail.textContent = user.email.split('@')[0]; // show username part only
     authModalOverlay.classList.add('hidden');
 
-    // Fetch cart from cloud on login
+    // Fetch cart and favourites from cloud on login
     await fetchCartFromCloud();
+    await fetchFavourites();
+    refreshCardIndicators();
+    refreshFavouriteButtons();
   } else {
     headerProfileMenu.classList.add('hidden');
     headerLoginBtn.classList.remove('hidden');
     headerUserEmail.textContent = '';
+    closeAccountDropdown();
 
-    // Clear cart on logout
+    // Clear cart and favourites on logout
     state.cart = [];
+    state.favourites.clear();
     updateFab();
-    if (!screenCart.classList.contains('hidden')) showScreen('search');
+    refreshFavouriteButtons();
+    if (screenCart.classList.contains('active')) showScreen('search');
+    if (screenFavourites.classList.contains('active')) showScreen('search');
   }
 }
 
@@ -1304,7 +1360,7 @@ function updateAuthModalUI() {
   }
 }
 
-// UI Toggle
+// UI Toggle — Sign In
 headerLoginBtn.addEventListener('click', () => {
   authMode = 'login';
   updateAuthModalUI();
@@ -1357,6 +1413,179 @@ headerLogoutBtn.addEventListener('click', async () => {
     showToast('👋 Signed out successfully');
   }
 });
+
+/* ══════════════════════════════════════════════════════════
+   MY ACCOUNT DROPDOWN
+   ══════════════════════════════════════════════════════════ */
+
+function openAccountDropdown() {
+  accountDropdown.classList.add('open');
+  accountMenuTrigger.setAttribute('aria-expanded', 'true');
+  accountDropdown.setAttribute('aria-hidden', 'false');
+}
+
+function closeAccountDropdown() {
+  accountDropdown.classList.remove('open');
+  accountMenuTrigger.setAttribute('aria-expanded', 'false');
+  accountDropdown.setAttribute('aria-hidden', 'true');
+}
+
+accountMenuTrigger.addEventListener('click', (e) => {
+  e.stopPropagation();
+  const isOpen = accountDropdown.classList.contains('open');
+  isOpen ? closeAccountDropdown() : openAccountDropdown();
+});
+
+// Close dropdown when clicking elsewhere
+document.addEventListener('click', () => closeAccountDropdown());
+accountDropdown.addEventListener('click', (e) => e.stopPropagation());
+
+// My Favourites nav link
+navFavouritesBtn.addEventListener('click', () => {
+  closeAccountDropdown();
+  showScreen('favourites');
+});
+
+// Logo → back to home
+logoHomeBtn.addEventListener('click', () => showScreen('search'));
+logoHomeBtn.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') showScreen('search'); });
+
+// Modal fav button
+modalFavBtn.addEventListener('click', async () => {
+  if (!state.modalState || !state.user) return;
+  const recipe = state.modalState.recipe;
+  await toggleFavourite(recipe);
+  const isFav = state.favourites.has(recipe.id);
+  modalFavBtn.innerHTML = isFav ? '♥ Saved to Favourites' : '♡ Save to Favourites';
+  modalFavBtn.classList.toggle('active', isFav);
+  refreshFavouriteButtons();
+});
+
+// Favourites screen — "Browse Recipes" back button
+favouritesBrowseBtn.addEventListener('click', () => showScreen('search'));
+
+/* ══════════════════════════════════════════════════════════
+   FAVOURITES — API & RENDERING
+   ══════════════════════════════════════════════════════════ */
+
+async function fetchFavourites() {
+  if (!appDb || !state.user) return;
+  try {
+    const { data, error } = await appDb
+      .from('user_favourites')
+      .select('recipe_id')
+      .eq('user_id', state.user.id);
+
+    if (error) throw error;
+    state.favourites = new Set((data || []).map(r => r.recipe_id));
+  } catch (err) {
+    console.error('Error fetching favourites:', err);
+  }
+}
+
+async function toggleFavourite(recipe) {
+  if (!appDb || !state.user) return;
+  const id = recipe.id;
+  const isFav = state.favourites.has(id);
+
+  try {
+    if (isFav) {
+      // Remove
+      const { error } = await appDb
+        .from('user_favourites')
+        .delete()
+        .eq('user_id', state.user.id)
+        .eq('recipe_id', id);
+      if (error) throw error;
+      state.favourites.delete(id);
+      showToast(`Removed "${recipe.title}" from favourites`);
+    } else {
+      // Add — snapshot title, image, publisher for offline display
+      const { error } = await appDb
+        .from('user_favourites')
+        .insert({
+          user_id:   state.user.id,
+          recipe_id: id,
+          title:     recipe.title     || '',
+          image_url: recipe.image_url || '',
+          publisher: recipe.publisher || '',
+        });
+      if (error) throw error;
+      state.favourites.add(id);
+      showToast(`♥ Saved "${recipe.title}" to favourites`);
+    }
+  } catch (err) {
+    console.error('Error toggling favourite:', err);
+    showToast('⚠️ Could not update favourites. Try again.');
+  }
+}
+
+/** Refresh heart buttons on all visible cards + modal without re-rendering */
+function refreshFavouriteButtons() {
+  document.querySelectorAll('.card-fav-btn').forEach(btn => {
+    const card = btn.closest('.recipe-card');
+    if (!card) return;
+    const id = card.dataset.id;
+    const isFav = state.favourites.has(id);
+    btn.innerHTML = isFav ? '♥' : '♡';
+    btn.classList.toggle('active', isFav);
+  });
+  // Modal fav button
+  if (state.modalState && state.user) {
+    const isFav = state.favourites.has(state.modalState.recipe.id);
+    modalFavBtn.innerHTML = isFav ? '♥ Saved to Favourites' : '♡ Save to Favourites';
+    modalFavBtn.classList.toggle('active', isFav);
+  }
+}
+
+function renderFavouritesScreen() {
+  if (!state.user) {
+    favouritesGridArea.innerHTML = `
+      <div class="empty-favourites">
+        <span>🔐</span>
+        <p>Sign in to see your saved recipes.</p>
+        <button class="btn btn-primary" onclick="headerLoginBtn.click()">Sign In</button>
+      </div>`;
+    return;
+  }
+
+  if (!state.favourites.size) {
+    favouritesGridArea.innerHTML = `
+      <div class="empty-favourites">
+        <span>♡</span>
+        <p>You haven't saved any recipes yet.</p>
+        <p style="font-size:0.85rem;color:var(--text-muted);margin-top:0.5rem">
+          Click the heart on any recipe card to save it here.
+        </p>
+      </div>`;
+    favouritesScreenSub.textContent = '0 saved recipes';
+    return;
+  }
+
+  // We have a set of IDs — fetch display data from DB (includes snapshot)
+  appDb
+    .from('user_favourites')
+    .select('recipe_id, title, image_url, publisher')
+    .eq('user_id', state.user.id)
+    .order('added_at', { ascending: false })
+    .then(({ data, error }) => {
+      if (error || !data) return;
+      favouritesScreenSub.textContent = `${data.length} saved recipe${data.length !== 1 ? 's' : ''}`;
+      favouritesGridArea.innerHTML = '';
+      const grid = document.createElement('div');
+      grid.className = 'recipe-grid';
+      data.forEach(row => {
+        const recipeStub = {
+          id:        row.recipe_id,
+          title:     row.title,
+          image_url: row.image_url,
+          publisher: row.publisher,
+        };
+        grid.appendChild(buildRecipeCard(recipeStub, false));
+      });
+      favouritesGridArea.appendChild(grid);
+    });
+}
 
 /* ══════════════════════════════════════════════════════════
    INIT
