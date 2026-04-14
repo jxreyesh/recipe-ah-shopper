@@ -4,13 +4,12 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>RecipePlanner — Search, Plan & Shop</title>
+  <title>RecipePlanner — Search, Plan &amp; Shop</title>
   <meta name="description"
     content="Search recipes, build a multi-recipe meal plan, and generate a smart shopping list." />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link
-    href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Playfair+Display:wght@700&display=swap"
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap"
     rel="stylesheet" />
   <link rel="stylesheet" href="styles.css" />
 </head>
@@ -20,7 +19,7 @@
   <!-- ── HEADER ── -->
   <header class="header">
     <div class="header-inner">
-      <div class="logo">
+      <div class="logo" id="logo-home" role="button" tabindex="0" aria-label="Go to home">
         <span class="logo-icon">🍽️</span>
         <span class="logo-text">RecipePlanner</span>
       </div>
@@ -28,11 +27,31 @@
 
       <!-- AUTH SECTION -->
       <div id="auth-header-section" class="auth-header-section">
+
+        <!-- Logged-out: Sign In button -->
         <button id="header-login-btn" class="btn btn-outline btn-sm">Sign In / Register</button>
-        <div id="header-profile-menu" class="hidden">
-          <span id="header-user-email" class="header-user-email"></span>
-          <button id="header-logout-btn" class="btn btn-outline btn-sm">Sign Out</button>
+
+        <!-- Logged-in: My Account dropdown -->
+        <div id="header-profile-menu" class="header-profile-menu hidden">
+          <button id="account-menu-trigger" class="account-menu-trigger" aria-haspopup="true" aria-expanded="false">
+            <span class="account-avatar" id="account-avatar">U</span>
+            <span id="header-user-email" class="header-user-email"></span>
+            <span class="account-caret">▾</span>
+          </button>
+          <div id="account-dropdown" class="account-dropdown" aria-hidden="true">
+            <div class="account-dropdown-header">
+              <span class="account-dropdown-label">My Account</span>
+            </div>
+            <button id="nav-favourites-btn" class="account-dropdown-item">
+              <span class="dropdown-item-icon">♥</span> My Favourites
+            </button>
+            <div class="account-dropdown-divider"></div>
+            <button id="header-logout-btn" class="account-dropdown-item account-dropdown-item--danger">
+              <span class="dropdown-item-icon">↪</span> Sign Out
+            </button>
+          </div>
         </div>
+
       </div>
     </div>
     <div class="header-bg-circles">
@@ -114,19 +133,37 @@
         <div class="ingredient-list-header">
           <span id="ingredient-count" class="item-count-badge"></span>
           <div class="ingredient-list-actions">
-            <button id="estimate-ah-btn" class="btn btn-sm">🏷️
-              Estimate Costs with AH</button>
+            <button id="estimate-ah-btn" class="btn btn-sm">🏷️ Estimate Costs with AH</button>
             <button id="copy-btn" class="btn btn-sm">📋 Copy</button>
             <button id="print-btn" class="btn btn-sm">🖨️ Print</button>
             <button id="clear-btn" class="btn btn-sm btn-danger">🗑️ Clear All</button>
           </div>
         </div>
-        <div id="ah-total-cost-container" class="hidden"
-          style="margin-top: 1rem; padding: 1.5rem; background: rgba(0,255,100,0.1); border-radius: 12px; border: 1px solid rgba(0,255,100,0.2); text-align: center;">
-          <h2 style="margin: 0; color: var(--text);">Estimated Albert Heijn Total: <span id="ah-total-cost"
-              style="color: var(--primary);">€0.00</span></h2>
+        <div id="ah-total-cost-container" class="hidden ah-total-cost-container">
+          <h2 class="ah-total-cost-label">Estimated Albert Heijn Total:
+            <span id="ah-total-cost" class="ah-total-cost-value">€0.00</span>
+          </h2>
         </div>
         <ul id="ingredient-list" class="ingredient-list" aria-label="Shopping list"></ul>
+      </div>
+
+    </section>
+
+    <!-- ════════════════════════════════
+         SCREEN 3 — My Favourites
+         ════════════════════════════════ -->
+    <section id="screen-favourites" class="screen">
+
+      <div class="favourites-screen-header">
+        <div>
+          <h2 class="favourites-screen-title">♥ My Favourites</h2>
+          <p class="favourites-screen-sub" id="favourites-screen-sub"></p>
+        </div>
+        <button id="favourites-browse-btn" class="btn btn-ghost">← Browse Recipes</button>
+      </div>
+
+      <div id="favourites-grid-area">
+        <!-- Injected by JS -->
       </div>
 
     </section>
@@ -196,8 +233,12 @@
           </div>
         </div>
 
-        <!-- Footer action -->
+        <!-- Footer actions -->
         <div class="modal-footer">
+          <!-- Favourite button — only shown when logged in (toggled by JS) -->
+          <button id="modal-fav-btn" class="btn btn-ghost modal-fav-btn hidden" aria-label="Save to favourites">
+            ♡ Save to Favourites
+          </button>
           <button id="add-to-cart-btn" class="btn btn-primary btn-lg">
             <span>🛒</span> Add to Shopping List
           </button>
