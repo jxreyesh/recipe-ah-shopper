@@ -24,21 +24,14 @@ const appDb = window.supabase ? window.supabase.createClient(_SUPABASE_URL, _SUP
 
 // Quick-search shortcuts shown as pills (Forkify has no category filter endpoint)
 const CATEGORIES = [
-  { name: 'Chicken',    emoji: '🍗' },
-  { name: 'Pasta',      emoji: '🍝' },
-  { name: 'Beef',       emoji: '🥩' },
-  { name: 'Salmon',     emoji: '🐟' },
-  { name: 'Curry',      emoji: '🍛' },
-  { name: 'Tacos',      emoji: '🌮' },
-  { name: 'Soup',       emoji: '🍲' },
-  { name: 'Salad',      emoji: '🥗' },
-  { name: 'Pizza',      emoji: '🍕' },
-  { name: 'Cake',       emoji: '🎂' },
-  { name: 'Sushi',      emoji: '🍱' },
-  { name: 'Vegan',      emoji: '🌿' },
-  { name: 'Breakfast',  emoji: '🍳' },
-  { name: 'Shrimp',     emoji: '🦐' },
+  { name: 'Meat' },
+  { name: 'Fish' },
+  { name: 'Vegetarian' },
+  { name: 'Vegan' },
+  { name: 'Breakfast' },
+  { name: 'Lunch' },
 ];
+
 
 /* ══════════════════════════════════════════════════════════
    STATE
@@ -64,11 +57,11 @@ const CATEGORIES = [
    ══════════════════════════════════════════════════════════ */
 
 const state = {
-  cart:           [],    // CartEntry[]
+  cart: [],    // CartEntry[]
   activeCategory: null,  // currently active quick-search pill
-  modalState:     null,  // active modal state
-  loading:        false,
-  user:           null,  // current logged-in user object
+  modalState: null,  // active modal state
+  loading: false,
+  user: null,  // current logged-in user object
 };
 
 let authMode = 'login'; // 'login' or 'signup'
@@ -82,72 +75,72 @@ let activeModalTab = 'ingredients';
 
 const $ = id => document.getElementById(id);
 
-const screenSearch         = $('screen-search');
-const screenCart           = $('screen-cart');
-const searchInput          = $('search-input');
-const searchBtn            = $('search-btn');
-const categoryPillsEl      = $('category-pills');
-const resultsArea          = $('results-area');
-const heroMsg              = $('hero-msg');
+const screenSearch = $('screen-search');
+const screenCart = $('screen-cart');
+const searchInput = $('search-input');
+const searchBtn = $('search-btn');
+const categoryPillsEl = $('category-pills');
+const resultsArea = $('results-area');
+const heroMsg = $('hero-msg');
 
-const cartFab              = $('cart-fab');
-const fabBadge             = $('fab-badge');
-const cartScreenSub        = $('cart-screen-sub');
-const tabBadgeRecipes      = $('tab-badge-recipes');
-const tabBadgeItems        = $('tab-badge-items');
-const addMoreBtn           = $('add-more-btn');
-const tabBtnOverview       = $('tab-btn-overview');
-const tabBtnIngredients    = $('tab-btn-ingredients');
-const tabOverview          = $('tab-overview');
-const tabIngredients       = $('tab-ingredients');
-const cartRecipeList       = $('cart-recipe-list');
-const ingredientList       = $('ingredient-list');
-const ingredientCountEl    = $('ingredient-count');
-const copyBtn              = $('copy-btn');
-const printBtn             = $('print-btn');
-const clearBtn             = $('clear-btn');
-const estimateAhBtn        = $('estimate-ah-btn');
+const cartFab = $('cart-fab');
+const fabBadge = $('fab-badge');
+const cartScreenSub = $('cart-screen-sub');
+const tabBadgeRecipes = $('tab-badge-recipes');
+const tabBadgeItems = $('tab-badge-items');
+const addMoreBtn = $('add-more-btn');
+const tabBtnOverview = $('tab-btn-overview');
+const tabBtnIngredients = $('tab-btn-ingredients');
+const tabOverview = $('tab-overview');
+const tabIngredients = $('tab-ingredients');
+const cartRecipeList = $('cart-recipe-list');
+const ingredientList = $('ingredient-list');
+const ingredientCountEl = $('ingredient-count');
+const copyBtn = $('copy-btn');
+const printBtn = $('print-btn');
+const clearBtn = $('clear-btn');
+const estimateAhBtn = $('estimate-ah-btn');
 const ahTotalCostContainer = $('ah-total-cost-container');
-const ahTotalCostEl        = $('ah-total-cost');
+const ahTotalCostEl = $('ah-total-cost');
 
-const modalOverlay         = $('modal-overlay');
-const modalCloseBtn        = $('modal-close');
-const modalImg             = $('modal-img');
-const modalTitleEl         = $('modal-title');
-const modalTagsEl          = $('modal-tags');
-const modalServingsInput   = $('modal-servings');
-const modalDecBtn          = $('modal-dec');
-const modalIncBtn          = $('modal-inc');
-const modalIngredientList  = $('modal-ingredient-list');
-const modalSelectedCount   = $('modal-selected-count');
+const modalOverlay = $('modal-overlay');
+const modalCloseBtn = $('modal-close');
+const modalImg = $('modal-img');
+const modalTitleEl = $('modal-title');
+const modalTagsEl = $('modal-tags');
+const modalServingsInput = $('modal-servings');
+const modalDecBtn = $('modal-dec');
+const modalIncBtn = $('modal-inc');
+const modalIngredientList = $('modal-ingredient-list');
+const modalSelectedCount = $('modal-selected-count');
 const modalInstructionsCard = $('modal-instructions-card');
-const modalTabIng          = $('modal-tab-ing');
-const modalTabIns          = $('modal-tab-ins');
-const modalIngContent      = $('modal-ing-content');
-const modalInsContent      = $('modal-ins-content');
-const addToCartBtn         = $('add-to-cart-btn');
-const checkAllBtn          = $('check-all-btn');
-const uncheckAllBtn        = $('uncheck-all-btn');
+const modalTabIng = $('modal-tab-ing');
+const modalTabIns = $('modal-tab-ins');
+const modalIngContent = $('modal-ing-content');
+const modalInsContent = $('modal-ins-content');
+const addToCartBtn = $('add-to-cart-btn');
+const checkAllBtn = $('check-all-btn');
+const uncheckAllBtn = $('uncheck-all-btn');
 
-const toastEl              = $('toast');
+const toastEl = $('toast');
 
 /* Auth UI */
-const headerLoginBtn       = $('header-login-btn');
-const headerProfileMenu    = $('header-profile-menu');
-const headerUserEmail      = $('header-user-email');
-const headerLogoutBtn      = $('header-logout-btn');
+const headerLoginBtn = $('header-login-btn');
+const headerProfileMenu = $('header-profile-menu');
+const headerUserEmail = $('header-user-email');
+const headerLogoutBtn = $('header-logout-btn');
 
-const authModalOverlay     = $('auth-modal-overlay');
-const authModalClose       = $('auth-modal-close');
-const authForm             = $('auth-form');
-const authEmail            = $('auth-email');
-const authPassword         = $('auth-password');
-const authSubmitBtn        = $('auth-submit-btn');
-const authError            = $('auth-error');
-const authToggleMode       = $('auth-toggle-mode');
-const authModalTitle       = $('auth-modal-title');
-const authModalSubtitle    = $('auth-modal-subtitle');
-const authToggleText       = $('auth-toggle-text');
+const authModalOverlay = $('auth-modal-overlay');
+const authModalClose = $('auth-modal-close');
+const authForm = $('auth-form');
+const authEmail = $('auth-email');
+const authPassword = $('auth-password');
+const authSubmitBtn = $('auth-submit-btn');
+const authError = $('auth-error');
+const authToggleMode = $('auth-toggle-mode');
+const authModalTitle = $('auth-modal-title');
+const authModalSubtitle = $('auth-modal-subtitle');
+const authToggleText = $('auth-toggle-text');
 
 /* ══════════════════════════════════════════════════════════
    UTILITIES
@@ -161,7 +154,7 @@ function uniqueId() {
 
 /** Parse a fraction string like "1 1/2", "½", "0.5" into a number. */
 function parseFraction(str) {
-  const UNICODE = { '½': 0.5, '¼': 0.25, '¾': 0.75, '⅓': 1/3, '⅔': 2/3, '⅛': 0.125 };
+  const UNICODE = { '½': 0.5, '¼': 0.25, '¾': 0.75, '⅓': 1 / 3, '⅔': 2 / 3, '⅛': 0.125 };
   let s = str.trim();
   for (const [ch, val] of Object.entries(UNICODE)) s = s.replace(ch, ` ${val} `);
   const parts = s.trim().split(/\s+/);
@@ -194,7 +187,7 @@ function scaleQty(baseQty, factor) {
 function fmtIngredient(ing, qty = ing.baseQuantity) {
   const parts = [];
   if (qty !== null && qty !== undefined) parts.push(fmt(qty));
-  if (ing.unit)        parts.push(ing.unit);
+  if (ing.unit) parts.push(ing.unit);
   if (ing.description) parts.push(ing.description);
   return parts.join(' ') || 'to taste';
 }
@@ -227,7 +220,7 @@ function showToast(msg, ms = 2800) {
 /**
  * Splits a query into meaningful words (skip stopwords < 3 chars).
  */
-const STOPWORDS = new Set(['and','the','with','for','from','of','in','a','an','to']);
+const STOPWORDS = new Set(['and', 'the', 'with', 'for', 'from', 'of', 'in', 'a', 'an', 'to']);
 function queryWords(q) {
   const words = q.toLowerCase().trim().split(/[\s,.\-/_]+/).filter(w => w.length > 0);
   // Only filter stopwords if we have a multi-word query
@@ -242,7 +235,7 @@ function queryWords(q) {
  */
 function scoreRelevance(recipe, words, rawQuery) {
   const title = (recipe.title || '').toLowerCase();
-  const raw   = rawQuery.toLowerCase().trim();
+  const raw = rawQuery.toLowerCase().trim();
 
   if (!words.length) return 0;
 
@@ -291,8 +284,8 @@ function rankRecipes(recipes, rawQuery) {
       const score = scoreRelevance(r, words, rawQuery);
       // "Exact" label if score is high (contains all words or exact phrase)
       const label = score >= 75 ? 'exact'
-                  : score >= 15 ? 'good'
-                  : 'weak';
+        : score >= 15 ? 'good'
+          : 'weak';
       return { recipe: r, score, label };
     })
     .sort((a, b) => b.score - a.score || (a.recipe.title || '').localeCompare(b.recipe.title || ''));
@@ -320,17 +313,17 @@ async function apiGetRecipe(id) {
 
 function showScreen(name) {
   screenSearch.classList.toggle('active', name === 'search');
-  screenCart  .classList.toggle('active', name === 'cart');
+  screenCart.classList.toggle('active', name === 'cart');
   if (name === 'cart') renderCart();
 }
 
 function setCartTab(tab) {
-  tabBtnOverview   .classList.toggle('active', tab === 'overview');
+  tabBtnOverview.classList.toggle('active', tab === 'overview');
   tabBtnIngredients.classList.toggle('active', tab === 'ingredients');
-  tabBtnOverview   .setAttribute('aria-selected', String(tab === 'overview'));
+  tabBtnOverview.setAttribute('aria-selected', String(tab === 'overview'));
   tabBtnIngredients.setAttribute('aria-selected', String(tab === 'ingredients'));
-  tabOverview      .classList.toggle('active', tab === 'overview');
-  tabIngredients   .classList.toggle('active', tab === 'ingredients');
+  tabOverview.classList.toggle('active', tab === 'overview');
+  tabIngredients.classList.toggle('active', tab === 'ingredients');
   if (tab === 'ingredients') renderIngredientList();
 }
 
@@ -345,7 +338,7 @@ function renderCategoryPills() {
     btn.className = 'category-pill';
     btn.dataset.name = cat.name;
     btn.setAttribute('aria-label', `Search ${cat.name} recipes`);
-    btn.innerHTML = `<span>${cat.emoji}</span> ${cat.name}`;
+    btn.innerHTML = `${cat.name}`;
     btn.addEventListener('click', () => onCategoryClick(cat.name, btn));
     categoryPillsEl.appendChild(btn);
   });
@@ -417,13 +410,13 @@ async function loadResults(fetchFn, subtitle, rawQuery = '') {
 }
 
 function renderSearchResults(recipes, subtitle, rawQuery = '') {
-  const ranked    = rankRecipes(recipes, rawQuery);
-  const exact     = ranked.filter(r => r.label === 'exact');
-  const strong    = ranked.filter(r => r.label === 'good');
-  const weak      = ranked.filter(r => r.label === 'weak');
+  const ranked = rankRecipes(recipes, rawQuery);
+  const exact = ranked.filter(r => r.label === 'exact');
+  const strong = ranked.filter(r => r.label === 'good');
+  const weak = ranked.filter(r => r.label === 'weak');
 
   const mainResults = [...exact, ...strong];
-  const showCount   = mainResults.length || recipes.length;
+  const showCount = mainResults.length || recipes.length;
 
   resultsArea.innerHTML = `
     <div class="results-header">
@@ -466,7 +459,7 @@ function renderSearchResults(recipes, subtitle, rawQuery = '') {
     const g = document.getElementById('weak-grid');
     weak.forEach(r => g.appendChild(buildRecipeCard(r.recipe, false)));
 
-    document.getElementById('show-weak-btn')?.addEventListener('click', function() {
+    document.getElementById('show-weak-btn')?.addEventListener('click', function () {
       document.getElementById('weak-results-wrap').hidden = false;
       document.getElementById('show-more-row').style.display = 'none';
     });
@@ -475,9 +468,9 @@ function renderSearchResults(recipes, subtitle, rawQuery = '') {
 
 function buildRecipeCard(recipe, isBestMatch = false) {
   const inCart = state.cart.some(e => e.recipe.id === recipe.id);
-  const title  = recipe.title || 'Untitled';
-  const img    = recipe.image_url || '';
-  const pub    = recipe.publisher || '';
+  const title = recipe.title || 'Untitled';
+  const img = recipe.image_url || '';
+  const pub = recipe.publisher || '';
 
   const card = document.createElement('div');
   card.className = `recipe-card${inCart ? ' in-cart' : ''}${isBestMatch ? ' best-match' : ''}`;
@@ -506,24 +499,56 @@ function buildRecipeCard(recipe, isBestMatch = false) {
   return card;
 }
 
-function resetToHero() {
+async function resetToHero() {
   resultsArea.innerHTML = '';
   heroMsg.classList.remove('hidden');
   resultsArea.appendChild(heroMsg);
+  await loadFeaturedRecipes();
+}
+
+async function loadFeaturedRecipes() {
+  // Fetch a small set of popular recipes to show on the home page
+  const FEATURED_QUERIES = ['pasta', 'chicken', 'salad'];
+  try {
+    const results = await Promise.all(
+      FEATURED_QUERIES.map(q => apiSearch(q))
+    );
+    // Take the top-scored result from each query
+    const featured = results.map(list => {
+      if (!list.length) return null;
+      const ranked = rankRecipes(list, list[0]?.title || '');
+      return (ranked.find(r => r.label === 'exact') || ranked[0])?.recipe || null;
+    }).filter(Boolean);
+
+    if (!featured.length) return;
+
+    const section = document.createElement('div');
+    section.className = 'featured-section';
+    section.innerHTML = `
+      <div class="results-section-label" style="margin-top: 1.5rem;">✨ Popular right now</div>
+      <div class="recipe-grid" id="featured-grid"></div>
+    `;
+    resultsArea.appendChild(section);
+
+    const grid = section.querySelector('#featured-grid');
+    featured.forEach(r => grid.appendChild(buildRecipeCard(r, false)));
+  } catch (e) {
+    // Silently fail — don't block the home page
+  }
 }
 
 /** Refresh the "In List" badges on currently visible recipe cards. */
 function refreshCardIndicators() {
   document.querySelectorAll('.recipe-card').forEach(card => {
-    const inCart   = state.cart.some(e => e.recipe.id === card.dataset.id);
-    const imgWrap  = card.querySelector('.card-img-wrap');
-    const badge    = card.querySelector('.in-cart-indicator');
+    const inCart = state.cart.some(e => e.recipe.id === card.dataset.id);
+    const imgWrap = card.querySelector('.card-img-wrap');
+    const badge = card.querySelector('.in-cart-indicator');
     const actionTx = card.querySelector('.card-action-text');
 
     card.classList.toggle('in-cart', inCart);
     if (inCart && !badge) {
       const s = document.createElement('span');
-      s.className   = 'in-cart-indicator';
+      s.className = 'in-cart-indicator';
       s.textContent = '✓ In List';
       imgWrap.appendChild(s);
     } else if (!inCart && badge) {
@@ -548,10 +573,10 @@ async function openModal(recipe) {
   setModalTab('ingredients');
 
   const loadingTitle = recipe.title || 'Loading…';
-  modalTitleEl.innerHTML        = loadingTitle + (/\b(vegan|vegetarian)\b/i.test(loadingTitle) ? ' <span title="Vegan/Vegetarian">🌿</span>' : '');
-  modalImg.src                  = recipe.image_url || '';
-  modalImg.alt                  = recipe.title || '';
-  modalTagsEl.innerHTML         = '';
+  modalTitleEl.innerHTML = loadingTitle + (/\b(vegan|vegetarian)\b/i.test(loadingTitle) ? ' <span title="Vegan/Vegetarian">🌿</span>' : '');
+  modalImg.src = recipe.image_url || '';
+  modalImg.alt = recipe.title || '';
+  modalTagsEl.innerHTML = '';
   modalIngredientList.innerHTML =
     '<li style="padding:2.5rem;color:var(--text-muted);text-align:center"><div class="spinner" style="margin:0 auto 1rem"></div>Loading ingredients…</li>';
   modalInstructionsCard.innerHTML = '';
@@ -571,21 +596,21 @@ async function openModal(recipe) {
 
   // Check if already in cart (for editing)
   const existingEntry = state.cart.find(e => e.recipe.id === fullRecipe.id);
-  const baseServings  = fullRecipe.servings || 4;
-  const initServings  = existingEntry ? existingEntry.servings : baseServings;
-  const factor        = initServings / baseServings;
+  const baseServings = fullRecipe.servings || 4;
+  const initServings = existingEntry ? existingEntry.servings : baseServings;
+  const factor = initServings / baseServings;
 
   state.modalState = {
-    recipe:       fullRecipe,
+    recipe: fullRecipe,
     baseServings: baseServings,
-    servings:     initServings,
-    cartEntryId:  existingEntry ? existingEntry.id : null,
-    ingredients:  (fullRecipe.ingredients || []).map((ing, idx) => ({
-      description:  ing.description || '',
-      unit:         ing.unit || '',
+    servings: initServings,
+    cartEntryId: existingEntry ? existingEntry.id : null,
+    ingredients: (fullRecipe.ingredients || []).map((ing, idx) => ({
+      description: ing.description || '',
+      unit: ing.unit || '',
       baseQuantity: ing.quantity ?? null,
-      scaledQty:    ing.quantity != null ? scaleQty(ing.quantity, factor) : null,
-      included:     existingEntry ? (existingEntry.ingredients[idx]?.included ?? true) : true,
+      scaledQty: ing.quantity != null ? scaleQty(ing.quantity, factor) : null,
+      included: existingEntry ? (existingEntry.ingredients[idx]?.included ?? true) : true,
     })),
   };
 
@@ -597,14 +622,14 @@ function renderModalFull() {
   const isEditing = Boolean(cartEntryId);
 
   // Image & title
-  modalImg.src              = recipe.image_url || '';
-  modalImg.alt              = recipe.title || '';
+  modalImg.src = recipe.image_url || '';
+  modalImg.alt = recipe.title || '';
   const recipeTitle = recipe.title || '';
-  modalTitleEl.innerHTML    = recipeTitle + (/\b(vegan|vegetarian)\b/i.test(recipeTitle) ? ' <span title="Vegan/Vegetarian">🌿</span>' : '');
+  modalTitleEl.innerHTML = recipeTitle + (/\b(vegan|vegetarian)\b/i.test(recipeTitle) ? ' <span title="Vegan/Vegetarian">🌿</span>' : '');
 
   // Tags
   modalTagsEl.innerHTML = [
-    recipe.publisher    ? `<span class="modal-tag">${recipe.publisher}</span>`       : '',
+    recipe.publisher ? `<span class="modal-tag">${recipe.publisher}</span>` : '',
     recipe.cooking_time ? `<span class="modal-tag">⏱ ${recipe.cooking_time} min</span>` : '',
   ].join('');
 
@@ -626,7 +651,7 @@ function renderModalFull() {
 
 function renderModalInstructions() {
   const { recipe } = state.modalState;
-  
+
   modalInstructionsCard.innerHTML = `
     <div class="ins-card-content">
       <span class="ins-card-publisher">${recipe.publisher || 'Recipe Source'}</span>
@@ -644,15 +669,15 @@ function renderModalInstructions() {
 
 function setModalTab(tab) {
   activeModalTab = tab;
-  
+
   modalTabIng.classList.toggle('active', tab === 'ingredients');
   modalTabIns.classList.toggle('active', tab === 'instructions');
   modalTabIng.setAttribute('aria-selected', String(tab === 'ingredients'));
   modalTabIns.setAttribute('aria-selected', String(tab === 'instructions'));
-  
+
   modalIngContent.classList.toggle('active', tab === 'ingredients');
   modalInsContent.classList.toggle('active', tab === 'instructions');
-  
+
   if (state.modalState) {
     if (tab === 'ingredients') renderModalIngredients();
     else renderModalInstructions();
@@ -661,10 +686,10 @@ function setModalTab(tab) {
 
 function renderModalIngredients() {
   const { ingredients } = state.modalState;
-  const includedCount   = ingredients.filter(i => i.included).length;
+  const includedCount = ingredients.filter(i => i.included).length;
 
   modalSelectedCount.textContent = `${includedCount} / ${ingredients.length} selected`;
-  modalIngredientList.innerHTML  = '';
+  modalIngredientList.innerHTML = '';
 
   ingredients.forEach((ing, idx) => {
     const display = fmtIngredient(ing, ing.scaledQty);
@@ -679,7 +704,7 @@ function renderModalIngredients() {
       </div>
       <span class="modal-ingredient-name">${capitalise(ing.description)}</span>
       <span class="modal-ingredient-measure">${display}</span>`;
-    li.addEventListener('click',   () => toggleModalIngredient(idx));
+    li.addEventListener('click', () => toggleModalIngredient(idx));
     li.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') toggleModalIngredient(idx); });
     modalIngredientList.appendChild(li);
   });
@@ -692,8 +717,8 @@ function toggleModalIngredient(idx) {
 
 function setModalServings(val) {
   const v = Math.max(1, Math.min(50, val));
-  state.modalState.servings    = v;
-  modalServingsInput.value     = v;
+  state.modalState.servings = v;
+  modalServingsInput.value = v;
   const factor = v / state.modalState.baseServings;
   state.modalState.ingredients.forEach(ing => {
     ing.scaledQty = ing.baseQuantity != null ? scaleQty(ing.baseQuantity, factor) : null;
@@ -742,7 +767,7 @@ function addToCart() {
 
 function removeFromCart(id) {
   const entry = state.cart.find(e => e.id === id);
-  state.cart   = state.cart.filter(e => e.id !== id);
+  state.cart = state.cart.filter(e => e.id !== id);
   updateFab();
   refreshCardIndicators();
   if (entry) showToast(`🗑️ Removed "${entry.recipe.title}"`);
@@ -765,9 +790,9 @@ function renderCart() {
   const nR = state.cart.length;
   const nI = merged.length;
 
-  cartScreenSub.textContent      = `${nR} recipe${nR !== 1 ? 's' : ''} · ${nI} ingredient${nI !== 1 ? 's' : ''}`;
-  tabBadgeRecipes.textContent    = nR;
-  tabBadgeItems.textContent      = nI;
+  cartScreenSub.textContent = `${nR} recipe${nR !== 1 ? 's' : ''} · ${nI} ingredient${nI !== 1 ? 's' : ''}`;
+  tabBadgeRecipes.textContent = nR;
+  tabBadgeItems.textContent = nI;
 
   renderCartRecipeList();
   // Refresh ingredients tab only if it's visible
@@ -798,7 +823,7 @@ function renderCartRecipeList() {
       <div class="cart-recipe-info">
         <h4 class="cart-recipe-name">${entry.recipe.title} ${/\b(vegan|vegetarian)\b/i.test(entry.recipe.title || '') ? '<span title="Vegan/Vegetarian">🌿</span>' : ''}</h4>
         <div class="cart-recipe-meta">
-          ${entry.recipe.publisher    ? `<span class="card-tag">${entry.recipe.publisher}</span>` : ''}
+          ${entry.recipe.publisher ? `<span class="card-tag">${entry.recipe.publisher}</span>` : ''}
           ${entry.recipe.cooking_time ? `<span class="card-tag">⏱ ${entry.recipe.cooking_time} min</span>` : ''}
         </div>
         <div class="cart-recipe-pills">
@@ -812,7 +837,7 @@ function renderCartRecipeList() {
         <button class="btn btn-sm btn-remove" data-id="${entry.id}" aria-label="Remove ${entry.recipe.title}">🗑️</button>
       </div>`;
 
-    card.querySelector('.btn-edit')  .addEventListener('click', () => openModal(entry.recipe));
+    card.querySelector('.btn-edit').addEventListener('click', () => openModal(entry.recipe));
     card.querySelector('.btn-remove').addEventListener('click', () => removeFromCart(entry.id));
     cartRecipeList.appendChild(card);
   });
@@ -847,13 +872,13 @@ function normalizeIngredient(desc) {
   if (str.includes('-')) str = str.substring(0, str.indexOf('-'));
   // Remove parentheses
   str = str.replace(/\(.*?\)/g, '');
-  
+
   // Remove prep words
   const words = str.split(/\s+/).filter(w => {
     const cleanWord = w.replace(/[^a-z]/g, '');
     return cleanWord.length > 0 && !PREP_WORDS.has(cleanWord);
   });
-  
+
   return words.join(' ').trim();
 }
 
@@ -868,17 +893,17 @@ function getMergedIngredients() {
   for (const entry of state.cart) {
     for (const ing of entry.ingredients) {
       if (!ing.included) continue;
-      
+
       const key = normalizeIngredient(ing.description);
       if (!key) continue;
-      
+
       if (!map.has(key)) {
         map.set(key, { displayName: capitalise(key), sources: [] });
       }
-      
+
       // Keep the original description in the source measure so no information is lost
       const displayMeasure = fmtIngredient(ing, ing.scaledQty);
-      
+
       map.get(key).sources.push({
         recipeName: entry.recipe.title,
         measure: displayMeasure
@@ -927,7 +952,7 @@ function renderIngredientList() {
       const checked = li.classList.toggle('checked');
       li.setAttribute('aria-checked', String(checked));
     };
-    li.addEventListener('click',   toggle);
+    li.addEventListener('click', toggle);
     li.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') toggle(); });
     ingredientList.appendChild(li);
   });
@@ -942,7 +967,7 @@ async function onEstimateAh() {
   if (!merged.length) return;
 
   const ingredientNames = merged.map(m => m.displayName);
-  
+
   estimateAhBtn.disabled = true;
   estimateAhBtn.textContent = '⏳ Estimating...';
   showToast('Fetching prices from Albert Heijn...');
@@ -953,45 +978,45 @@ async function onEstimateAh() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ ingredients: ingredientNames })
     });
-    
+
     if (!res.ok) throw new Error('Failed to fetch prices');
-    
+
     const data = await res.json();
     const prices = data.results || [];
-    
+
     let totalCost = 0;
-    
+
     // Helper to estimate how many AH packages are needed
     function calculatePacksNeeded(recipeSources, ahUnitSize) {
       if (!ahUnitSize) return 1;
-      
+
       let totalRecipeQty = 0;
       let recipeUnit = '';
-      
+
       for (const src of recipeSources) {
-         const str = src.measure || "";
-         const numMatch = str.match(/^([\d\.]+)/);
-         if (numMatch) {
-           totalRecipeQty += parseFloat(numMatch[1]);
-           const rest = str.substring(numMatch[1].length).trim();
-           const uMatch = rest.match(/^([a-zA-Z]+)/);
-           if (uMatch && !recipeUnit) recipeUnit = uMatch[1].toLowerCase();
-         } else {
-           totalRecipeQty += 1;
-         }
+        const str = src.measure || "";
+        const numMatch = str.match(/^([\d\.]+)/);
+        if (numMatch) {
+          totalRecipeQty += parseFloat(numMatch[1]);
+          const rest = str.substring(numMatch[1].length).trim();
+          const uMatch = rest.match(/^([a-zA-Z]+)/);
+          if (uMatch && !recipeUnit) recipeUnit = uMatch[1].toLowerCase();
+        } else {
+          totalRecipeQty += 1;
+        }
       }
-      
+
       if (totalRecipeQty <= 0) return 1;
       if (!recipeUnit) recipeUnit = "item";
-    
+
       const ahStr = ahUnitSize.replace(',', '.');
       const ahMatch = ahStr.match(/^([\d\.]+)\s*(.*)/);
       if (!ahMatch) return 1;
-      
+
       const ahQty = parseFloat(ahMatch[1]);
       let ahUnit = ahMatch[2].toLowerCase().trim();
       if (ahQty <= 0) return 1;
-      
+
       const normalize = u => {
         if (u.match(/^(g|gram|grams)$/)) return { t: 'w', m: 1 };
         if (u.match(/^(kg|kilo|kilogram)$/)) return { t: 'w', m: 1000 };
@@ -1000,18 +1025,18 @@ async function onEstimateAh() {
         if (u.match(/^(stuks|stuk|piece|pieces|whole|item|bos|plantje)$/)) return { t: 'c', m: 1 };
         return null;
       };
-    
+
       const ru = normalize(recipeUnit);
       const au = normalize(ahUnit);
-      
+
       if (ru && au && ru.t === au.t) {
         return Math.max(1, Math.ceil((totalRecipeQty * ru.m) / (ahQty * au.m)));
       }
-      
+
       if (!ru && au && au.t === 'c') {
-         return Math.max(1, Math.ceil(totalRecipeQty / ahQty));
+        return Math.max(1, Math.ceil(totalRecipeQty / ahQty));
       }
-      
+
       return 1;
     }
 
@@ -1023,7 +1048,7 @@ async function onEstimateAh() {
         const itemQuantity = calculatePacksNeeded(merged[idx].sources, priceData.unit);
         const itemTotal = priceData.price * itemQuantity;
         totalCost += itemTotal;
-        
+
         let resultWrap = li.querySelector('.ah-result-wrap');
         if (!resultWrap) {
           resultWrap = document.createElement('div');
@@ -1033,15 +1058,15 @@ async function onEstimateAh() {
           resultWrap.style.alignItems = 'center';
           resultWrap.style.gap = '0.75rem';
           resultWrap.style.flexShrink = '0';
-          
+
           li.querySelector('.ingredient-item-content').style.display = 'flex';
           li.querySelector('.ingredient-item-content').style.alignItems = 'center';
           li.querySelector('.ingredient-item-content').style.width = '100%';
           li.querySelector('.ingredient-item-content').appendChild(resultWrap);
         }
-        
+
         resultWrap.innerHTML = '';
-        
+
         if (priceData.link) {
           const btn = document.createElement('a');
           btn.href = priceData.link;
@@ -1051,20 +1076,20 @@ async function onEstimateAh() {
           btn.style.fontSize = '0.85rem';
           btn.style.padding = '0.3rem 0.6rem';
           btn.style.borderRadius = '6px';
-          btn.style.backgroundColor = 'rgba(255, 255, 255, 0.1)';
-          btn.style.color = 'var(--text-muted)';
-          btn.style.border = '1px solid rgba(255,255,255,0.2)';
+          btn.style.backgroundColor = 'var(--accent-light)';
+          btn.style.color = 'var(--accent)';
+          btn.style.border = '1px solid rgba(6,122,70,0.25)';
           btn.style.transition = 'all 0.2s ease';
           btn.textContent = priceData.title.length > 30 ? priceData.title.substring(0, 30) + '...' : priceData.title;
-          
-          btn.onmouseover = () => { btn.style.backgroundColor = 'rgba(255, 255, 255, 0.2)'; btn.style.color = '#fff'; };
-          btn.onmouseout = () => { btn.style.backgroundColor = 'rgba(255, 255, 255, 0.1)'; btn.style.color = 'var(--text-muted)'; };
-          
+
+          btn.onmouseover = () => { btn.style.backgroundColor = 'rgba(6,122,70,0.18)'; btn.style.color = 'var(--accent-hover)'; };
+          btn.onmouseout = () => { btn.style.backgroundColor = 'var(--accent-light)'; btn.style.color = 'var(--accent)'; };
+
           btn.addEventListener('click', e => e.stopPropagation());
-          
+
           resultWrap.appendChild(btn);
         }
-        
+
         const badge = document.createElement('span');
         badge.className = 'ah-price-badge';
         badge.style.padding = '0.3rem 0.6rem';
@@ -1076,10 +1101,10 @@ async function onEstimateAh() {
         badge.style.display = 'flex';
         badge.style.alignItems = 'center';
         badge.style.gap = '0.4rem';
-        
+
         badge.innerHTML = `<span style="opacity:0.6; font-size: 0.8rem; border-right: 1px solid rgba(0,200,100,0.3); padding-right: 0.4rem;">${itemQuantity}x</span> €${itemTotal.toFixed(2)}`;
 
-        
+
         resultWrap.appendChild(badge);
       }
     });
@@ -1088,7 +1113,7 @@ async function onEstimateAh() {
     ahTotalCostContainer.classList.remove('hidden');
     ahTotalCostContainer.classList.add('pulse');
     setTimeout(() => ahTotalCostContainer.classList.remove('pulse'), 600);
-    
+
     showToast('✅ Prices estimated!');
   } catch (err) {
     showToast('❌ Error estimating prices.');
@@ -1111,7 +1136,7 @@ function buildClipboardText() {
     .join('\n');
 
   let text = `🍽️  MEAL PLAN\n${'─'.repeat(42)}\n${header}\n\n`;
-  text    += `🛒  SHOPPING LIST  (${merged.length} items)\n${'─'.repeat(42)}\n`;
+  text += `🛒  SHOPPING LIST  (${merged.length} items)\n${'─'.repeat(42)}\n`;
   merged.forEach(({ displayName, sources }) => {
     const amounts = sources.map(s => `${s.measure} (${s.recipeName})`).join(' + ');
     text += `• ${displayName} — ${amounts}\n`;
@@ -1132,12 +1157,12 @@ cartFab.addEventListener('click', () => showScreen('cart'));
 
 // Cart nav
 addMoreBtn.addEventListener('click', () => showScreen('search'));
-tabBtnOverview   .addEventListener('click', () => setCartTab('overview'));
+tabBtnOverview.addEventListener('click', () => setCartTab('overview'));
 tabBtnIngredients.addEventListener('click', () => setCartTab('ingredients'));
 
 // Copy / Print / Clear
 estimateAhBtn.addEventListener('click', onEstimateAh);
-copyBtn .addEventListener('click', () => {
+copyBtn.addEventListener('click', () => {
   navigator.clipboard.writeText(buildClipboardText())
     .then(() => showToast('✅ Copied to clipboard!'))
     .catch(() => showToast('❌ Copy failed. Try selecting all and copying manually.'));
@@ -1159,9 +1184,9 @@ modalTabIng.addEventListener('click', () => setModalTab('ingredients'));
 modalTabIns.addEventListener('click', () => setModalTab('instructions'));
 
 // Modal — close
-modalCloseBtn  .addEventListener('click', closeModal);
-modalOverlay   .addEventListener('click', e => { if (e.target === modalOverlay) closeModal(); });
-document       .addEventListener('keydown', e => {
+modalCloseBtn.addEventListener('click', closeModal);
+modalOverlay.addEventListener('click', e => { if (e.target === modalOverlay) closeModal(); });
+document.addEventListener('keydown', e => {
   if (e.key === 'Escape' && !modalOverlay.classList.contains('hidden')) closeModal();
 });
 
@@ -1174,7 +1199,7 @@ modalServingsInput.addEventListener('change', () => {
 });
 
 // Modal — check all / none
-checkAllBtn  .addEventListener('click', () => {
+checkAllBtn.addEventListener('click', () => {
   state.modalState.ingredients.forEach(i => i.included = true);
   renderModalIngredients();
 });
@@ -1209,14 +1234,14 @@ async function handleAuthStateChange(user) {
     headerProfileMenu.classList.remove('hidden');
     headerUserEmail.textContent = user.email;
     authModalOverlay.classList.add('hidden');
-    
+
     // Fetch cart from cloud on login
     await fetchCartFromCloud();
   } else {
     headerProfileMenu.classList.add('hidden');
     headerLoginBtn.classList.remove('hidden');
     headerUserEmail.textContent = '';
-    
+
     // Clear cart on logout
     state.cart = [];
     updateFab();
@@ -1232,9 +1257,9 @@ async function fetchCartFromCloud() {
       .select('cart_data')
       .eq('user_id', state.user.id)
       .single();
-      
+
     if (error && error.code !== 'PGRST116') throw error; // PGRST116 is "no rows found"
-    
+
     if (data && data.cart_data) {
       state.cart = data.cart_data;
       updateFab();
@@ -1251,11 +1276,11 @@ async function syncCartToCloud() {
   try {
     const { error } = await appDb
       .from('user_carts')
-      .upsert({ 
-        user_id: state.user.id, 
-        cart_data: state.cart 
+      .upsert({
+        user_id: state.user.id,
+        cart_data: state.cart
       }, { onConflict: 'user_id' });
-      
+
     if (error) throw error;
   } catch (err) {
     console.error('Error syncing cart:', err);
@@ -1337,9 +1362,10 @@ headerLogoutBtn.addEventListener('click', async () => {
    INIT
    ══════════════════════════════════════════════════════════ */
 
-(function init() {
+(async function init() {
   renderCategoryPills();
   resultsArea.innerHTML = '';
   resultsArea.appendChild(heroMsg);
   heroMsg.classList.remove('hidden');
+  await loadFeaturedRecipes();
 })();
